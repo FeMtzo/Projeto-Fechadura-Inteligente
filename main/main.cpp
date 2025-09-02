@@ -5,7 +5,6 @@
 // Incluindo os cabeçalhos dos nossos componentes
 #include "rfid_reader.h"
 #include "lock_actuator.h"
-#include "ui_feedback.h"
 
 // Ponto de entrada para programas ESP-IDF
 extern "C" void app_main(void)
