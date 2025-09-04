@@ -16,6 +16,7 @@ sdkconfig.old
 *.d
 
 # Outros
+.clangd
 *.DS_Store
 =======
 # Prerequisites
