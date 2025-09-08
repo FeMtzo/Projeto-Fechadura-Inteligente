@@ -10,3 +10,4 @@ project(Projeto-Fechadura-Inteligente)
 include_directories(${CMAKE_SOURCE_DIR}/path/to/headers)
 # or, for a specific target:
 # target_include_directories(your_target PRIVATE ${CMAKE_SOURCE_DIR}/path/to/headers)
+

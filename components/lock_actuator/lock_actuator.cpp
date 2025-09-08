@@ -2,6 +2,7 @@
 #include "utils_defs.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "ui_feedback.h"
 
 // Implementação da função
 void lock_actuator_init(void)
@@ -26,5 +27,6 @@ void lock_actuator_close(void)
 {
     ESP_LOGI(TAG_LOCK, "Fechando a trava...");
     gpio_set_level((gpio_num_t)LOCK_RELAY_PIN, 0);
+    
 }
 
