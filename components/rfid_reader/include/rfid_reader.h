@@ -1,4 +1,11 @@
-#pragma once // Garante que este arquivo seja incluído apenas uma vez
+#pragma once
 
-// Declaração da função de inicialização
-void rfid_reader_init(void);
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+
+/**
+ * @brief Inicializa o leitor RFID, registra os eventos e inicia a varredura em segundo plano.
+ *
+ * @param event_queue A fila de eventos central da aplicação para onde os dados da tag serão enviados.
+ */
+void rfid_reader_init(QueueHandle_t event_queue);
