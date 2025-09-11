@@ -2,7 +2,7 @@
 // --- CONFIGURAÇÕES DE HARDWARE ---
 // Módulo Leitor RFID MFRC522 (Interface SPI)
 #define RFID_SDA_PIN   5  // SS (Slave Select)
-#define RFID_RST_PIN   27 // Reset
+#define RFID_RST_PIN   22 // Reset
 // Pinos MOSI, MISO e SCK são os padrões do ESP32 para VSPI:
 // MOSI: 23, MISO: 19, SCK: 18
 
@@ -10,14 +10,15 @@
 #define RELAY_PIN      26
 
 // Teclado Matricial 4x4
-#define KEYPAD_ROWS    4
-#define KEYPAD_COLS    4
-const byte KEYPAD_ROW_PINS[KEYPAD_ROWS] = {33, 32, 15, 4}; 
-const byte KEYPAD_COL_PINS[KEYPAD_COLS] = {14, 12, 13, 25};
+// Apenas declaramos as variáveis aqui, avisando que elas existem.
+extern const byte KEYPAD_ROWS;
+extern const byte KEYPAD_COLS;
+extern const byte KEYPAD_ROW_PINS[];
+extern const byte KEYPAD_COL_PINS[];
 
 // --- CONFIGURAÇÕES DE ACESSO ---
 #define MASTER_PASSWORD "1234" // Senha mestre para acesso
-#define MASTER_UID "DE:AD:BE:EF" // UID da tag RFID mestre (formato: "XX:XX:XX:XX")
+#define MASTER_UID "F3:9F:87:14" // UID da tag RFID mestre (formato: "XX:XX:XX:XX")
 
 // --- CONFIGURAÇÕES DE REDE E TELEGRAM ---
 #define WIFI_SSID "CLARO_2G89AE1C"
