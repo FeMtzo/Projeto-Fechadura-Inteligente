@@ -10,7 +10,8 @@ enum FeedbackState {
   STATE_FAIL,
   STATE_CADAS,
   STATE_LOCKING,
-  STATE_SUCCESS_CADAS
+  STATE_SUCCESS_CADAS,
+  STATE_REMOVE
 };
 
 // Variáveis de estado para o controle não-bloqueante
@@ -34,6 +35,13 @@ bool lockingLedState = false;
 int lockingBlinkCount = 0;
 const int lockingTotalBlinks = 4;
 const unsigned long lockingBlinkInterval = 1000; // 1 segundo
+bool removePiscarAtivo = false;
+
+// Controle do feedback de sucesso
+bool successHandled = false;        // Marca se a mensagem de sucesso já foi enviada
+unsigned long lockOpenedAt = 0; 
+// Controle do feedback de falha
+bool failHandled = false; 
 
 void setupFeedback() {
   pinMode(LED_GREEN_PIN, OUTPUT);
@@ -59,26 +67,40 @@ void handleFeedback() {
             return;
 
         case STATE_SUCCESS:
-            digitalWrite(LED_RED_PIN, LOW);
-            digitalWrite(LED_BLUE_PIN, LOW);
-            digitalWrite(LED_GREEN_PIN, HIGH); // Liga o LED verde
-            digitalWrite(BUZZER_PIN, HIGH);    // Emite um beep
-            // Mantém o LED verde ligado enquanto a trava estiver aberta
-            if (!isLockOpen) {
-                // Trava fechada → volta ao estado ocioso
+            if (!successHandled) { // variável para evitar múltiplos envios
+                digitalWrite(LED_RED_PIN, LOW);
+                digitalWrite(LED_BLUE_PIN, LOW);
+                digitalWrite(LED_GREEN_PIN, HIGH);
+                digitalWrite(BUZZER_PIN, HIGH);
+
+                lastAccessMethod = ACCESS_RFID;
+
+                sendTelegramAccessGranted(lastAccessMethod); // agenda uma vez
+                lockOpenedAt = millis();
+                successHandled = true; // marca que já enviou
+            }
+
+            // Mantém o LED ligado pelo tempo de abertura da fechadura
+            if (millis() - lockOpenedAt >= LOCK_OPEN_DURATION) {
                 digitalWrite(LED_GREEN_PIN, LOW);
+                digitalWrite(BUZZER_PIN, LOW);
                 currentFeedbackState = STATE_IDLE;
+                successHandled = false; // reset para próxima vez
             }
             break;
 
         case STATE_FAIL:
-            // Se acabou de entrar no estado, inicializa o timestamp
-            if (feedbackTimestamp == 0) {
+            if (!failHandled) { // evita múltiplos envios
+                // Se acabou de entrar no estado, inicializa o timestamp
                 feedbackTimestamp = now;
                 digitalWrite(LED_GREEN_PIN, LOW);
                 digitalWrite(LED_BLUE_PIN, LOW);
                 digitalWrite(LED_RED_PIN, HIGH);
                 digitalWrite(BUZZER_PIN, HIGH);
+
+                lastAccessMethod = ACCESS_RFID;
+                sendTelegramAccessDenied(lastAccessMethod); // agenda uma vez
+                failHandled = true; // marca que já enviou
             }
 
             // Mantém o LED e buzzer ligados enquanto o tempo não acabar
@@ -87,6 +109,7 @@ void handleFeedback() {
                 digitalWrite(BUZZER_PIN, LOW);
                 currentFeedbackState = STATE_IDLE;
                 feedbackTimestamp = 0; // reseta para próxima vez
+                failHandled = false;    // libera para próxima falha
             }
             break;
 
@@ -106,6 +129,31 @@ void handleFeedback() {
                 blinkCount++;
                 if (blinkCount >= totalBlinks * 2) {
                     digitalWrite(LED_BLUE_PIN, LOW);
+                    cadasPiscarAtivo = false;
+                    currentFeedbackState = STATE_IDLE;
+                }
+            }
+            break;
+
+        case STATE_REMOVE:
+            // Inicia o piscar apenas uma vez
+            if (!cadasPiscarAtivo) {
+                cadasPiscarAtivo = true;
+                blinkCount = 0;
+                blinkTimestamp = now;
+                digitalWrite(LED_BLUE_PIN, LOW);
+                digitalWrite(LED_RED_PIN, LOW);
+            }
+
+            // Alterna LED baseado no tempo
+            if (cadasPiscarAtivo && now - blinkTimestamp >= blinkInterval) {
+                blinkTimestamp = now;
+                digitalWrite(LED_BLUE_PIN, !digitalRead(LED_BLUE_PIN));
+                digitalWrite(LED_RED_PIN, !digitalRead(LED_RED_PIN));
+                blinkCount++;
+                if (blinkCount >= totalBlinks * 2) {
+                    digitalWrite(LED_BLUE_PIN, LOW);
+                    digitalWrite(LED_RED_PIN, LOW);
                     cadasPiscarAtivo = false;
                     currentFeedbackState = STATE_IDLE;
                 }
@@ -167,6 +215,7 @@ void signalIdle() {
 
 void signalSuccess() {
   currentFeedbackState = STATE_SUCCESS;
+  Serial.print("Sinal de sucesso");
 }
 
 void signalFail() {
@@ -188,4 +237,9 @@ void signalLocking() {
 void successCadas(){
     currentFeedbackState = STATE_SUCCESS_CADAS;
 
+}
+
+void signalRemove() {
+    currentFeedbackState = STATE_REMOVE;
+    removePiscarAtivo = false;
 }

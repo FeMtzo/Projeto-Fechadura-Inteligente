@@ -6,17 +6,17 @@ unsigned long lockOpenTimestamp = 0;
 
 void setupLock() {
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Garante que a fechadura comece travada (relé desligado)
+  digitalWrite(RELAY_PIN, !RELAY_ACTIVE_LEVEL); // garante que comece DESLIGADO
   Serial.println("Sistema de trava inicializado.");
 }
 
 void openLock() {
-  if (!isLockOpen)
+  if (!isLockOpen){
     Serial.println("Comando recebido! Abrindo fechadura...");
     digitalWrite(RELAY_PIN, RELAY_ACTIVE_LEVEL);
     isLockOpen = true;
-    lockOpenTimestamp = millis();
-    signalSuccess();
+    lockOpenTimestamp = millis();    
+}
 }
 
 void handleLockState(){
@@ -31,3 +31,4 @@ void handleLockState(){
     isLockOpen = false;
   }
 }
+

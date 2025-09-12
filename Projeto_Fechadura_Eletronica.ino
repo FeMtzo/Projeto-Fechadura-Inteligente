@@ -8,7 +8,7 @@
 #include <UniversalTelegramBot.h>
 #include "FS.h"
 #include "LittleFS.h"
-extern bool cadastroAtivo;
+#include "config.h"
 // --- Declaração das funções que estão nos outros arquivos .cpp ---
 // Isso informa ao main.cpp que essas funções existem em algum lugar do projeto.
 void setupLock();
@@ -59,8 +59,4 @@ void loop() {
   handleTelegram();
   handleLockState();
   handleFeedback();
-  
-  // if () {
-  //       signalCadas(); // pisca LED azul enquanto estiver no modo cadastro
-  //   }
 }
