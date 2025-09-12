@@ -6,7 +6,8 @@
 MFRC522 rfid(RFID_SDA_PIN, RFID_RST_PIN);
 
 bool aguardandoAcao = false;       // Esperando a próxima leitura após mestra
-bool cadastroAtivo = false;        
+bool cadastroAtivo = false;
+bool sucessoCadastro = false;          
 bool apagarAtivo = false;          
 bool aguardandoConfirmacao = false; // Confirmação mestra
 String uidParaCadastrar = "";     
@@ -43,17 +44,22 @@ void handleRFID() {
 
     Serial.print("Tag detectada! UID: "); Serial.println(currentUID);
 
-    // ---- CONFIRMAÇÃO MESRA ----
+    // ---- CONFIRMAÇÃO MESTRA ----
     if (aguardandoConfirmacao && currentUID.equals(MASTER_UID)) {
         if (cadastroAtivo) {
             addSenha(uidParaCadastrar);
             Serial.println("Cadastro concluído: " + uidParaCadastrar);
+            successCadas();
             uidParaCadastrar = "";
             cadastroAtivo = false;
+            if (!sucessoCadastro){
+
+            }
         } else if (apagarAtivo) {
             if (checkSenha(uidParaRemover)) {
                 removeSenha(uidParaRemover);
                 Serial.println("Tag removida: " + uidParaRemover);
+                successCadas();
             } else {
                 Serial.println("Essa tag não está cadastrada!");
             }
@@ -62,6 +68,9 @@ void handleRFID() {
         }
         aguardandoConfirmacao = false;
         return;
+    }
+    if (aguardandoAcao || !cadastroAtivo || !apagarAtivo) {
+        signalCadas(); // pisca LED azul enquanto estiver no modo cadastro
     }
 
     // ---- TAG MESTRE ----
@@ -80,6 +89,7 @@ void handleRFID() {
             return;
         }
     }
+
 
     // ---- TAG NÃO MESTRE ----
     if (aguardandoAcao) {

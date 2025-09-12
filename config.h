@@ -7,7 +7,7 @@
 // MOSI: 23, MISO: 19, SCK: 18
 
 // Módulo Relé para acionar a fechadura
-#define RELAY_PIN      26
+#define RELAY_PIN      21
 
 // Teclado Matricial 4x4
 // Apenas declaramos as variáveis aqui, avisando que elas existem.
@@ -30,11 +30,15 @@ extern const byte KEYPAD_COL_PINS[];
 // --- CONFIGURAÇÕES DA FECHADURA ---
 #define LOCK_OPEN_DURATION 5000 // Tempo em milissegundos que a porta ficará aberta (5s)
 #define RELAY_ACTIVE_LEVEL LOW  // Nível lógico para ativar o relé (LOW ou HIGH)
-
+#define ACCESS_FAIL 3000
 // --- CONFIGURAÇÕES DE FEEDBACK (LEDs e Buzzer) ---
-#define LED_GREEN_PIN    13 // Pino para o LED Verde
-#define LED_RED_PIN      12 // Pino para o LED Vermelho
-#define LED_BLUE_PIN     14 // Pino para o LED Azul (Estado Ocioso)
+// #define LED_GREEN_PIN    13 // Pino para o LED Verde
+// #define LED_RED_PIN      12 // Pino para o LED Vermelho
+// #define LED_BLUE_PIN     14 // Pino para o LED Azul (Estado Ocioso)
+
+#define LED_GREEN_PIN    15 // Pino para o LED Verde
+#define LED_RED_PIN      2 // Pino para o LED Vermelho
+#define LED_BLUE_PIN     4 // Pino para o LED Azul (Estado Ocioso)
 #define BUZZER_PIN       25 // Pino para o Buzzer
 
 // Duração dos sinais de feedback em milissegundos
