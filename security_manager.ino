@@ -2,7 +2,7 @@
 #include "LittleFS.h"
 
 #define SENHAS_FILE "/senhas.txt"
-
+#include "config.h"
 
 
 // Inicializa LittleFS

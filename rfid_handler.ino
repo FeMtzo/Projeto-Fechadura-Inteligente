@@ -6,7 +6,8 @@
 MFRC522 rfid(RFID_SDA_PIN, RFID_RST_PIN);
 
 bool aguardandoAcao = false;       // Esperando a próxima leitura após mestra
-bool cadastroAtivo = false;        
+bool cadastroAtivo = false;
+bool sucessoCadastro = false;          
 bool apagarAtivo = false;          
 bool aguardandoConfirmacao = false; // Confirmação mestra
 String uidParaCadastrar = "";     
@@ -40,22 +41,30 @@ void handleRFID() {
     }
     lastReadUID = currentUID;
     lastReadTime = millis();
-
+    Serial.print("Método de entrada: "); Serial.println(lastAccessMethod);
     Serial.print("Tag detectada! UID: "); Serial.println(currentUID);
 
-    // ---- CONFIRMAÇÃO MESRA ----
+    // ---- CONFIRMAÇÃO MESTRA ----
     if (aguardandoConfirmacao && currentUID.equals(MASTER_UID)) {
         if (cadastroAtivo) {
             addSenha(uidParaCadastrar);
             Serial.println("Cadastro concluído: " + uidParaCadastrar);
+            requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG CADASTRADA: " + uidParaCadastrar);
+            successCadas();
             uidParaCadastrar = "";
             cadastroAtivo = false;
+            if (!sucessoCadastro){
+
+            }
         } else if (apagarAtivo) {
             if (checkSenha(uidParaRemover)) {
                 removeSenha(uidParaRemover);
                 Serial.println("Tag removida: " + uidParaRemover);
+                requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG REMOVIDA: " + uidParaRemover);
+                successCadas();
             } else {
                 Serial.println("Essa tag não está cadastrada!");
+                aguardandoAcao = false;
             }
             uidParaRemover = "";
             apagarAtivo = false;
@@ -63,12 +72,16 @@ void handleRFID() {
         aguardandoConfirmacao = false;
         return;
     }
+    if (aguardandoAcao || !cadastroAtivo || !apagarAtivo) {
+        signalCadas(); // pisca LED azul enquanto estiver no modo cadastro
+    }
 
-    // ---- TAG MESTRE ----
+    // ---- TAG MESTRA ----
     if (currentUID.equals(MASTER_UID)) {
         if (!aguardandoAcao) {
             // Primeira leitura da mestra → aguarda próxima ação
             aguardandoAcao = true;
+            requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG MESTRA INSERIDA");
             Serial.println("Tag mestra detectada. Aguarde próxima tag para decidir ação.");
             return;
         } else {
@@ -77,9 +90,11 @@ void handleRFID() {
             aguardandoAcao = false;
             uidParaRemover = "";
             Serial.println("Modo apagar ativado! Aproxime a tag a ser removida.");
+            signalRemove();
             return;
         }
     }
+
 
     // ---- TAG NÃO MESTRE ----
     if (aguardandoAcao) {
@@ -104,18 +119,29 @@ void handleRFID() {
             aguardandoConfirmacao = true;
             Serial.println("Tag preparada para apagar: " + uidParaRemover);
             Serial.println("Aproxime a tag mestra para confirmar a remoção.");
+            signalRemove();
         } else {
             Serial.println("Essa tag não está cadastrada!");
         }
         return;
     }
 
-    // Acesso normal
     if (checkSenha(currentUID)) {
-        Serial.println("ACESSO PERMITIDO!");
-        openLock();
+        lastAccessMethod = ACCESS_RFID; // registra que acesso foi via RFID
+        Serial.println("ACESSO PERMITIDO VIA " + accessTypeToString(lastAccessMethod));
+
+        openLock(); // abre a fechadura imediatamente
+        // feedback visual verde
+        signalSuccess();  
+
+        // depois prepara a mensagem para envio assíncrono
+        // requestTelegramMessage(TELEGRAM_CHAT_ID, "ACESSO PERMITIDO VIA " + accessTypeToString(lastAccessMethod));
     } else {
-        Serial.println("ACESSO NEGADO!");
-        signalFail();
+        lastAccessMethod = ACCESS_RFID; // mesmo para acesso negado
+        Serial.println("ACESSO NEGADO VIA " + accessTypeToString(lastAccessMethod));
+
+        signalFail(); // feedback visual vermelho imediato
+
+        // requestTelegramMessage(TELEGRAM_CHAT_ID, "TENTATIVA DE ACESSO NEGADA VIA " + accessTypeToString(lastAccessMethod));
     }
 }
