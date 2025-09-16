@@ -64,6 +64,7 @@ void handleRFID() {
                 successCadas();
             } else {
                 Serial.println("Essa tag não está cadastrada!");
+                aguardandoAcao = false;
             }
             uidParaRemover = "";
             apagarAtivo = false;

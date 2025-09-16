@@ -1,5 +1,5 @@
 #include "config.h"
-
+#include <HTTPClient.h>
 // --- Chat ID ---
 const String TELEGRAM_CHAT_ID = "6183959627";
 
@@ -58,7 +58,7 @@ bool checarPermissao(const String& uid) {
     return false;
 }
 
-#include <HTTPClient.h>
+
 
 void processTelegramMessage() {
     if (!pendingMsg.pending) return;
