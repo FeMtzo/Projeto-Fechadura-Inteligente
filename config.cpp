@@ -22,6 +22,7 @@ String accessTypeToString(AccessType method) {
         case ACCESS_RFID:      return "RFID";
         case ACCESS_PASSWORD:  return "PASSWORD";
         case ACCESS_BIOMETRIC: return "BIOMETRIC";
+        case ACCESS_TELEGRAM:  return "TELEGRAM";
         default:               return "UNKNOWN";
     }
 }

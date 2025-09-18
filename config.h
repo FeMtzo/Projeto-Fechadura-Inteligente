@@ -12,7 +12,8 @@ enum AccessType {
     ACCESS_NONE,
     ACCESS_RFID,
     ACCESS_PASSWORD,
-    ACCESS_BIOMETRIC
+    ACCESS_BIOMETRIC,
+    ACCESS_TELEGRAM
 };
 
 // Estrutura para gerenciar mensagens do Telegram
@@ -74,8 +75,10 @@ extern const byte KEYPAD_COL_PINS[];
 #define LED_RED_PIN     2
 #define LED_BLUE_PIN    4
 #define BUZZER_PIN      25
-#define LCD_SDA_PIN     12
-#define LCD_SCL_PIN     13
+#define LCD_SDA_PIN     14
+#define LCD_SCL_PIN     27
+
+
 // ============================================================================
 // CONFIGURAÇÕES DE ACESSO
 // ============================================================================

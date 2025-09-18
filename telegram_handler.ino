@@ -39,6 +39,7 @@ void checkWiFi() {
   if (WiFi.status() == WL_CONNECTED) {
     if (!wifiOk) {
       Serial.println("\nWiFi conectado!");
+      sendTelegramBotStart(); 
       wifiOk = true;
     }
 
@@ -49,7 +50,6 @@ void checkWiFi() {
       if (now > 24 * 3600) {
         Serial.println("Hora sincronizada!");
         timeSynced = true;
-        sendTelegramBotStart(); // Só chama quando realmente online e com hora
       }
     }
   } else {
@@ -66,57 +66,58 @@ void handleTelegram() {
   }
 }
 
-// void checkTelegramMessages() {
-//   // Pega novas mensagens desde a última recebida
-//   // bot.last_message_received mantém o ID da última mensagem processada
-//   int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+void checkTelegramMessages() {
+  // Pega novas mensagens desde a última recebida
+  // bot.last_message_received mantém o ID da última mensagem processada
+  int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-//   // Enquanto houver mensagens não lidas...
-//   while (numNewMessages) {
-//     Serial.println("📩 Nova mensagem recebida do Telegram!");
+  // Enquanto houver mensagens não lidas...
+  while (numNewMessages) {
+    Serial.println("📩 Nova mensagem recebida do Telegram!");
 
-//     // Percorre todas as mensagens recebidas nesta rodada
-//     for (int i = 0; i < numNewMessages; i++) {
-//       // Obtém o chat_id do remetente (importante para responder)
-//       String chat_id = String(bot.messages[i].chat_id);
+    // Percorre todas as mensagens recebidas nesta rodada
+    for (int i = 0; i < numNewMessages; i++) {
+      // Obtém o chat_id do remetente (importante para responder)
+      String chat_id = String(bot.messages[i].chat_id);
 
-//       // Texto enviado pelo usuário
-//       String text = bot.messages[i].text;
+      // Texto enviado pelo usuário
+      String text = bot.messages[i].text;
 
-//       Serial.println("👉 Chat ID: " + chat_id);
-//       Serial.println("👉 Texto recebido: " + text);
+      Serial.println("👉 Chat ID: " + chat_id);
+      Serial.println("👉 Texto recebido: " + text);
 
-//       // =========================================================================
-//       // Exemplo de comandos reconhecidos pelo bot
-//       // =========================================================================
+      // =========================================================================
+      // Exemplo de comandos reconhecidos pelo bot
+      // =========================================================================
 
-//       if (text == "/abrir") {
-//         // Caso o usuário envie "/abrir"
-//         bot.sendMessage(chat_id, "🔓 Abrindo a fechadura...", "");
-//         openLock();
+      if (text == "/abrir") {
+        // Caso o usuário envie "/abrir"
+        bot.sendMessage(chat_id, "🔓 Abrindo a fechadura...", "");
+        lastAccessMethod = ACCESS_TELEGRAM;
+        openLock();
 
-//         // Aqui você chama a função que abre a fechadura
-//         // Exemplo: openLock();
-//       }
-//       else if (text == "/status") {
-//         // Caso o usuário envie "/status"
-//         bot.sendMessage(chat_id, "📡 Sistema ativo e online!", "");
-//       }
-//       else if (text == "/help") {
-//         // Ajuda/lista de comandos disponíveis
-//         bot.sendMessage(chat_id,
-//           "📖 Comandos disponíveis:\n"
-//           "/abrir - Abre a fechadura\n"
-//           "/status - Mostra o status do sistema\n"
-//           "/help - Mostra esta ajuda", "");
-//       }
-//       else {
-//         // Se o comando não é reconhecido
-//         bot.sendMessage(chat_id, "❌ Comando não reconhecido. Use /help", "");
-//       }
-//     }
+        // Aqui você chama a função que abre a fechadura
+        // Exemplo: openLock();
+      }
+      else if (text == "/status") {
+        // Caso o usuário envie "/status"
+        bot.sendMessage(chat_id, "📡 Sistema ativo e online!", "");
+      }
+      else if (text == "/help") {
+        // Ajuda/lista de comandos disponíveis
+        bot.sendMessage(chat_id,
+          "📖 Comandos disponíveis:\n"
+          "/abrir - Abre a fechadura\n"
+          "/status - Mostra o status do sistema\n"
+          "/help - Mostra esta ajuda", "");
+      }
+      else {
+        // Se o comando não é reconhecido
+        bot.sendMessage(chat_id, "❌ Comando não reconhecido. Use /help", "");
+      }
+    }
 
-//     // Checa se ainda existem mais mensagens pendentes no servidor do Telegram
-//     numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-//   }
-// }
+    // Checa se ainda existem mais mensagens pendentes no servidor do Telegram
+    numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+  }
+}
