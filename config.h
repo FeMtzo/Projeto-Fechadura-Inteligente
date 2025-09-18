@@ -74,7 +74,8 @@ extern const byte KEYPAD_COL_PINS[];
 #define LED_RED_PIN     2
 #define LED_BLUE_PIN    4
 #define BUZZER_PIN      25
-
+#define LCD_SDA_PIN     12
+#define LCD_SCL_PIN     13
 // ============================================================================
 // CONFIGURAÇÕES DE ACESSO
 // ============================================================================

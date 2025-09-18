@@ -23,6 +23,7 @@ void setupKeypad();
 void handleKeypad();
 
 void setupTelegram();
+void checkWiFi();
 void handleTelegram();
 void sendTelegramMessage(String message);
 
@@ -54,6 +55,7 @@ void setup() {
 }
 
 void loop() {
+  checkWiFi();
   handleRFID();
   handleKeypad();
   handleTelegram();
