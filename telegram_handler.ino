@@ -7,12 +7,16 @@
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
 #include <ArduinoJson.h>
-#include "config.h" // Inclua suas definições de pinos, token e chat_id
+#include "config.h"
+#include "esp_log.h"
 
 
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(TELEGRAM_BOT_TOKEN, secured_client);
 extern bool isLockOpen;
+
+unsigned long lastWifiAttempt = 0;
+const unsigned long WIFI_RETRY_INTERVAL = 5000;
 
 unsigned long lastWifiCheck = 0;
 bool wifiConnected = false;
@@ -20,9 +24,8 @@ bool timeSynced = false;
 
 // --- Configura Wi-Fi e Telegram ---
 void setupTelegram() {
-  Serial.println("Conectando ao Wifi SSID: ");
-  Serial.println(WIFI_SSID);
-
+  esp_log_level_set("wifi", ESP_LOG_NONE);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   secured_client.setInsecure();
@@ -42,6 +45,7 @@ void checkWiFi() {
       sendTelegramBotStart(); 
       wifiOk = true;
     }
+    
 
     if (!timeSynced) {
       // Sincroniza hora só uma vez
@@ -53,10 +57,21 @@ void checkWiFi() {
       }
     }
   } else {
+    if (wifiOk) {
+      Serial.println("⚠️ WiFi caiu!");
+    }
     wifiOk = false;
     timeSynced = false;
+
+    // tenta reconectar a cada WIFI_RETRY_INTERVAL ms
+    if (millis() - lastWifiAttempt >= WIFI_RETRY_INTERVAL) {
+      lastWifiAttempt = millis();
+      WiFi.disconnect();
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    }
   }
 }
+
 
 // --- Chamado continuamente no loop ---
 void handleTelegram() {
@@ -66,58 +81,58 @@ void handleTelegram() {
   }
 }
 
-void checkTelegramMessages() {
-  // Pega novas mensagens desde a última recebida
-  // bot.last_message_received mantém o ID da última mensagem processada
-  int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+// void checkTelegramMessages() {
+//   // Pega novas mensagens desde a última recebida
+//   // bot.last_message_received mantém o ID da última mensagem processada
+//   int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-  // Enquanto houver mensagens não lidas...
-  while (numNewMessages) {
-    Serial.println("📩 Nova mensagem recebida do Telegram!");
+//   // Enquanto houver mensagens não lidas...
+//   while (numNewMessages) {
+//     Serial.println("📩 Nova mensagem recebida do Telegram!");
 
-    // Percorre todas as mensagens recebidas nesta rodada
-    for (int i = 0; i < numNewMessages; i++) {
-      // Obtém o chat_id do remetente (importante para responder)
-      String chat_id = String(bot.messages[i].chat_id);
+//     // Percorre todas as mensagens recebidas nesta rodada
+//     for (int i = 0; i < numNewMessages; i++) {
+//       // Obtém o chat_id do remetente (importante para responder)
+//       String chat_id = String(bot.messages[i].chat_id);
 
-      // Texto enviado pelo usuário
-      String text = bot.messages[i].text;
+//       // Texto enviado pelo usuário
+//       String text = bot.messages[i].text;
 
-      Serial.println("👉 Chat ID: " + chat_id);
-      Serial.println("👉 Texto recebido: " + text);
+//       Serial.println("👉 Chat ID: " + chat_id);
+//       Serial.println("👉 Texto recebido: " + text);
 
-      // =========================================================================
-      // Exemplo de comandos reconhecidos pelo bot
-      // =========================================================================
+//       // =========================================================================
+//       // Exemplo de comandos reconhecidos pelo bot
+//       // =========================================================================
 
-      if (text == "/abrir") {
-        // Caso o usuário envie "/abrir"
-        bot.sendMessage(chat_id, "🔓 Abrindo a fechadura...", "");
-        lastAccessMethod = ACCESS_TELEGRAM;
-        openLock();
+//       if (text == "/abrir") {
+//         // Caso o usuário envie "/abrir"
+//         bot.sendMessage(chat_id, "🔓 Abrindo a fechadura...", "");
+//         lastAccessMethod = ACCESS_TELEGRAM;
+//         openLock();
 
-        // Aqui você chama a função que abre a fechadura
-        // Exemplo: openLock();
-      }
-      else if (text == "/status") {
-        // Caso o usuário envie "/status"
-        bot.sendMessage(chat_id, "📡 Sistema ativo e online!", "");
-      }
-      else if (text == "/help") {
-        // Ajuda/lista de comandos disponíveis
-        bot.sendMessage(chat_id,
-          "📖 Comandos disponíveis:\n"
-          "/abrir - Abre a fechadura\n"
-          "/status - Mostra o status do sistema\n"
-          "/help - Mostra esta ajuda", "");
-      }
-      else {
-        // Se o comando não é reconhecido
-        bot.sendMessage(chat_id, "❌ Comando não reconhecido. Use /help", "");
-      }
-    }
+//         // Aqui você chama a função que abre a fechadura
+//         // Exemplo: openLock();
+//       }
+//       else if (text == "/status") {
+//         // Caso o usuário envie "/status"
+//         bot.sendMessage(chat_id, "📡 Sistema ativo e online!", "");
+//       }
+//       else if (text == "/help") {
+//         // Ajuda/lista de comandos disponíveis
+//         bot.sendMessage(chat_id,
+//           "📖 Comandos disponíveis:\n"
+//           "/abrir - Abre a fechadura\n"
+//           "/status - Mostra o status do sistema\n"
+//           "/help - Mostra esta ajuda", "");
+//       }
+//       else {
+//         // Se o comando não é reconhecido
+//         bot.sendMessage(chat_id, "❌ Comando não reconhecido. Use /help", "");
+//       }
+//     }
 
-    // Checa se ainda existem mais mensagens pendentes no servidor do Telegram
-    numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-  }
-}
+//     // Checa se ainda existem mais mensagens pendentes no servidor do Telegram
+//     numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+//   }
+// }

@@ -88,8 +88,8 @@ extern const byte KEYPAD_COL_PINS[];
 // ============================================================================
 // CONFIGURAÇÕES DE REDE & TELEGRAM
 // ============================================================================
-#define WIFI_SSID        "CLARO_2G89AE1C"
-#define WIFI_PASSWORD    "7089AE1C"
+#define WIFI_SSID        "matozo"
+#define WIFI_PASSWORD    "matozo2252"
 #define TELEGRAM_BOT_TOKEN "8225811146:AAFqUO2Nyxz9FfG-9JJW98t--I8sDr_kZNA"
 
 // ============================================================================

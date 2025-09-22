@@ -94,7 +94,6 @@ void handleFeedback() {
 
         case STATE_SUCCESS:
             if (!successHandled) { // variável para evitar múltiplos envios
-                Serial.print("vou acender o verdinho");
                 printCenter("SUCESSO", 0);
                 printCenter("ABRINDO", 1);
                 digitalWrite(LED_RED_PIN, LOW);
