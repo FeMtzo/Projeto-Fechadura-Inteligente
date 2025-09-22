@@ -26,7 +26,7 @@ void setupTelegram();
 void checkWiFi();
 void handleTelegram();
 void sendTelegramMessage(String message);
-
+// void checkTelegramMessages();
 
 // --- Fim das declarações ---
 
@@ -59,6 +59,7 @@ void loop() {
   handleRFID();
   handleKeypad();
   handleTelegram();
+  // checkTelegramMessages();
   handleLockState();
   handleFeedback();
 }

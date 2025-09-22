@@ -12,7 +12,8 @@ enum AccessType {
     ACCESS_NONE,
     ACCESS_RFID,
     ACCESS_PASSWORD,
-    ACCESS_BIOMETRIC
+    ACCESS_BIOMETRIC,
+    ACCESS_TELEGRAM
 };
 
 // Estrutura para gerenciar mensagens do Telegram
@@ -74,8 +75,10 @@ extern const byte KEYPAD_COL_PINS[];
 #define LED_RED_PIN     2
 #define LED_BLUE_PIN    4
 #define BUZZER_PIN      25
-#define LCD_SDA_PIN     12
-#define LCD_SCL_PIN     13
+#define LCD_SDA_PIN     14
+#define LCD_SCL_PIN     27
+
+
 // ============================================================================
 // CONFIGURAÇÕES DE ACESSO
 // ============================================================================
@@ -85,8 +88,8 @@ extern const byte KEYPAD_COL_PINS[];
 // ============================================================================
 // CONFIGURAÇÕES DE REDE & TELEGRAM
 // ============================================================================
-#define WIFI_SSID        "CLARO_2G89AE1C"
-#define WIFI_PASSWORD    "7089AE1C"
+#define WIFI_SSID        "matozo"
+#define WIFI_PASSWORD    "matozo2252"
 #define TELEGRAM_BOT_TOKEN "8225811146:AAFqUO2Nyxz9FfG-9JJW98t--I8sDr_kZNA"
 
 // ============================================================================

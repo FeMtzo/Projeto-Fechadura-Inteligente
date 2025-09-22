@@ -7,12 +7,16 @@
 #include <WiFiClientSecure.h>
 #include <UniversalTelegramBot.h>
 #include <ArduinoJson.h>
-#include "config.h" // Inclua suas definições de pinos, token e chat_id
+#include "config.h"
+#include "esp_log.h"
 
 
 WiFiClientSecure secured_client;
 UniversalTelegramBot bot(TELEGRAM_BOT_TOKEN, secured_client);
 extern bool isLockOpen;
+
+unsigned long lastWifiAttempt = 0;
+const unsigned long WIFI_RETRY_INTERVAL = 5000;
 
 unsigned long lastWifiCheck = 0;
 bool wifiConnected = false;
@@ -20,9 +24,8 @@ bool timeSynced = false;
 
 // --- Configura Wi-Fi e Telegram ---
 void setupTelegram() {
-  Serial.println("Conectando ao Wifi SSID: ");
-  Serial.println(WIFI_SSID);
-
+  esp_log_level_set("wifi", ESP_LOG_NONE);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   secured_client.setInsecure();
@@ -39,8 +42,10 @@ void checkWiFi() {
   if (WiFi.status() == WL_CONNECTED) {
     if (!wifiOk) {
       Serial.println("\nWiFi conectado!");
+      sendTelegramBotStart(); 
       wifiOk = true;
     }
+    
 
     if (!timeSynced) {
       // Sincroniza hora só uma vez
@@ -49,14 +54,24 @@ void checkWiFi() {
       if (now > 24 * 3600) {
         Serial.println("Hora sincronizada!");
         timeSynced = true;
-        sendTelegramBotStart(); // Só chama quando realmente online e com hora
       }
     }
   } else {
+    if (wifiOk) {
+      Serial.println("⚠️ WiFi caiu!");
+    }
     wifiOk = false;
     timeSynced = false;
+
+    // tenta reconectar a cada WIFI_RETRY_INTERVAL ms
+    if (millis() - lastWifiAttempt >= WIFI_RETRY_INTERVAL) {
+      lastWifiAttempt = millis();
+      WiFi.disconnect();
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    }
   }
 }
+
 
 // --- Chamado continuamente no loop ---
 void handleTelegram() {
@@ -93,6 +108,7 @@ void handleTelegram() {
 //       if (text == "/abrir") {
 //         // Caso o usuário envie "/abrir"
 //         bot.sendMessage(chat_id, "🔓 Abrindo a fechadura...", "");
+//         lastAccessMethod = ACCESS_TELEGRAM;
 //         openLock();
 
 //         // Aqui você chama a função que abre a fechadura

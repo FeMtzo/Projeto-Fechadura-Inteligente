@@ -61,7 +61,7 @@ void handleRFID() {
                 removeSenha(uidParaRemover);
                 Serial.println("Tag removida: " + uidParaRemover);
                 requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG REMOVIDA: " + uidParaRemover);
-                successCadas();
+                sucessRemove();
             } else {
                 Serial.println("Essa tag não está cadastrada!");
                 aguardandoAcao = false;
@@ -129,10 +129,10 @@ void handleRFID() {
     if (checkSenha(currentUID)) {
         lastAccessMethod = ACCESS_RFID; // registra que acesso foi via RFID
         Serial.println("ACESSO PERMITIDO VIA " + accessTypeToString(lastAccessMethod));
-
+        
         openLock(); // abre a fechadura imediatamente
         // feedback visual verde
-        signalSuccess();  
+         
 
         // depois prepara a mensagem para envio assíncrono
         // requestTelegramMessage(TELEGRAM_CHAT_ID, "ACESSO PERMITIDO VIA " + accessTypeToString(lastAccessMethod));
