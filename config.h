@@ -2,7 +2,6 @@
 #define CONFIG_H
 
 #include <Arduino.h>
-
 // ============================================================================
 // ENUMS & STRUCTS
 // ============================================================================
@@ -58,32 +57,37 @@ bool checarPermissao(const String& uid);
 
 // --- RFID (Módulo Leitor MFRC522 - Interface SPI) ---
 #define RFID_SDA_PIN   5    // SS (Slave Select)
-#define RFID_RST_PIN   22   // Reset
+#define RFID_RST_PIN   4   // Reset
 // Pinos VSPI padrão ESP32: MOSI (23), MISO (19), SCK (18)
 
 // --- Relé (para acionar a fechadura) ---
-#define RELAY_PIN      21
+#define RELAY_PIN      15
 
 // --- Teclado Matricial 4x4 ---
-extern const byte KEYPAD_ROWS;
-extern const byte KEYPAD_COLS;
-extern const byte KEYPAD_ROW_PINS[];
-extern const byte KEYPAD_COL_PINS[];
+#define KEYPAD_ROWS 4
+#define KEYPAD_COLS 4
+extern byte KEYPAD_ROW_PINS[KEYPAD_ROWS];
+extern byte KEYPAD_COL_PINS[KEYPAD_COLS];
+
+// --- Leitor Biometrico ---
+
+#define BIO_RX          16
+#define BIO_TX          17
 
 // --- LEDs & Buzzer (Feedback visual/sonoro) ---
-#define LED_GREEN_PIN   15
-#define LED_RED_PIN     2
-#define LED_BLUE_PIN    4
-#define BUZZER_PIN      25
-#define LCD_SDA_PIN     14
-#define LCD_SCL_PIN     27
+#define LED_GREEN_PIN   13
+#define LED_RED_PIN     27
+#define LED_BLUE_PIN    14
+#define BUZZER_PIN      12
+#define LCD_SDA_PIN     21
+#define LCD_SCL_PIN     22
 
 
 // ============================================================================
 // CONFIGURAÇÕES DE ACESSO
 // ============================================================================
-#define MASTER_PASSWORD  "1234"          // Senha mestre
 #define MASTER_UID       "F3:9F:87:14"   // UID da tag RFID mestre
+#define PASSWORD "1A2B3C"   // Defina aqui a senha
 
 // ============================================================================
 // CONFIGURAÇÕES DE REDE & TELEGRAM

@@ -9,6 +9,8 @@
 #include "FS.h"
 #include "LittleFS.h"
 #include "config.h"
+
+bool keypadDisplayNeedsUpdate = false; // <<< ADICIONE ESTA LINHA
 // --- Declaração das funções que estão nos outros arquivos .cpp ---
 // Isso informa ao main.cpp que essas funções existem em algum lugar do projeto.
 void setupLock();

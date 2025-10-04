@@ -49,8 +49,9 @@ void handleRFID() {
         if (cadastroAtivo) {
             addSenha(uidParaCadastrar);
             Serial.println("Cadastro concluído: " + uidParaCadastrar);
-            requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG CADASTRADA: " + uidParaCadastrar);
             successCadas();
+            requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG CADASTRADA: " + uidParaCadastrar);
+            
             uidParaCadastrar = "";
             cadastroAtivo = false;
             if (!sucessoCadastro){
@@ -60,8 +61,9 @@ void handleRFID() {
             if (checkSenha(uidParaRemover)) {
                 removeSenha(uidParaRemover);
                 Serial.println("Tag removida: " + uidParaRemover);
-                requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG REMOVIDA: " + uidParaRemover);
                 sucessRemove();
+                requestTelegramMessage(TELEGRAM_CHAT_ID, "TAG REMOVIDA: " + uidParaRemover);
+                
             } else {
                 Serial.println("Essa tag não está cadastrada!");
                 aguardandoAcao = false;
@@ -135,13 +137,11 @@ void handleRFID() {
          
 
         // depois prepara a mensagem para envio assíncrono
-        // requestTelegramMessage(TELEGRAM_CHAT_ID, "ACESSO PERMITIDO VIA " + accessTypeToString(lastAccessMethod));
     } else {
         lastAccessMethod = ACCESS_RFID; // mesmo para acesso negado
         Serial.println("ACESSO NEGADO VIA " + accessTypeToString(lastAccessMethod));
 
         signalFail(); // feedback visual vermelho imediato
 
-        // requestTelegramMessage(TELEGRAM_CHAT_ID, "TENTATIVA DE ACESSO NEGADA VIA " + accessTypeToString(lastAccessMethod));
     }
 }

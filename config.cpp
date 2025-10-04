@@ -3,6 +3,10 @@
 // --- Chat ID ---
 const String TELEGRAM_CHAT_ID = "6183959627";
 
+// --- Teclado Matricial 4x4 ---
+byte KEYPAD_ROW_PINS[KEYPAD_ROWS] = {34, 35, 36, 39};  // só entrada -> ótimo para linhas
+byte KEYPAD_COL_PINS[KEYPAD_COLS] = {32, 33, 25, 26};  // saídas -> ótimo para colunas
+
 // --- Mensagem pendente ---
 TelegramMessage pendingMsg;
 AccessType lastAccessMethod = ACCESS_NONE;
@@ -20,7 +24,7 @@ String accessTypeToString(AccessType method) {
     switch (method) {
         case ACCESS_NONE:      return "NONE";
         case ACCESS_RFID:      return "RFID";
-        case ACCESS_PASSWORD:  return "PASSWORD";
+        case ACCESS_PASSWORD:  return "TECLADO";
         case ACCESS_BIOMETRIC: return "BIOMETRIC";
         case ACCESS_TELEGRAM:  return "TELEGRAM";
         default:               return "UNKNOWN";

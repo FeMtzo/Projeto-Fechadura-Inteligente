@@ -15,9 +15,12 @@ enum FeedbackState {
   STATE_LOCKING,
   STATE_SUCCESS_CADAS,
   STATE_REMOVE,
-  STATE_SUCCESS_REMOV
+  STATE_SUCCESS_REMOV,
+  STATE_KEYPAD_INPUT
 };
 
+extern String enteredPassword;
+extern bool keypadDisplayNeedsUpdate;
 // Variáveis de estado para o controle não-bloqueante
 FeedbackState currentFeedbackState = STATE_IDLE;
 unsigned long feedbackTimestamp = 0;
@@ -43,6 +46,13 @@ bool removePiscarAtivo = false;
 
 // Controle do feedback de sucesso
 bool successHandled = false;        // Marca se a mensagem de sucesso já foi enviada
+bool successCadasHandled = false;
+
+bool cadasHandled = false;
+bool removeHandled = false;
+bool successRemoveHandled = false;
+
+
 unsigned long lockOpenedAt = 0; 
 // Controle do feedback de falha
 bool failHandled = false; 
@@ -63,7 +73,7 @@ void setupFeedback() {
   lcd.backlight();      
   printCenter("BEM VINDO!", 0);
   delay(3000);  // espera 3 segundos apenas na inicialização
-  lcd.clear();
+  
 
   // Inicia o sistema no estado Ocioso
   signalIdle();
@@ -74,14 +84,6 @@ void setupFeedback() {
 void handleFeedback() {
     unsigned long now = millis();
 
-    // unsigned long updateNow = millis();
-    // if (updateNow - lastUpdate >= interval) {
-    //     lastUpdate = updateNow;
-    //     lcd.setCursor(0, 1);
-    //     lcd.print("Contador: ");
-    //     lcd.print(contador++);
-    //     lcd.print("   "); // limpa sobra
-    // }
     switch(currentFeedbackState) {
         case STATE_IDLE:
             printCenter("AGUARDANDO", 0);
@@ -94,14 +96,14 @@ void handleFeedback() {
 
         case STATE_SUCCESS:
             if (!successHandled) { // variável para evitar múltiplos envios
+                lcd.clear();
+
                 printCenter("SUCESSO", 0);
                 printCenter("ABRINDO", 1);
                 digitalWrite(LED_RED_PIN, LOW);
                 digitalWrite(LED_BLUE_PIN, LOW);
                 digitalWrite(LED_GREEN_PIN, HIGH);
                 digitalWrite(BUZZER_PIN, HIGH);
-
-
                 sendTelegramAccessGranted(lastAccessMethod); // agenda uma vez
                 lockOpenedAt = millis();
                 successHandled = true; // marca que já enviou
@@ -117,6 +119,8 @@ void handleFeedback() {
 
         case STATE_FAIL:
             if (!failHandled) { // evita múltiplos envios
+                lcd.clear();
+
                 printCenter("ACESSO", 0);
                 printCenter("NEGADO", 1);
                 // Se acabou de entrar no estado, inicializa o timestamp
@@ -126,7 +130,6 @@ void handleFeedback() {
                 digitalWrite(LED_RED_PIN, HIGH);
                 digitalWrite(BUZZER_PIN, HIGH);
 
-                lastAccessMethod = ACCESS_RFID;
                 sendTelegramAccessDenied(lastAccessMethod); // agenda uma vez
                 failHandled = true; // marca que já enviou
             }
@@ -142,8 +145,12 @@ void handleFeedback() {
             break;
 
         case STATE_CADAS:
+            if(!cadasHandled){
+            lcd.clear();
             printCenter("CADASTRANDO", 0);
             printCenter("USUARIO", 1);
+            cadasHandled = true;
+            }
             // Inicia o piscar apenas uma vez
             if (!cadasPiscarAtivo) {
                 cadasPiscarAtivo = true;
@@ -166,8 +173,12 @@ void handleFeedback() {
             break;
 
         case STATE_REMOVE:
+            if(!removeHandled){
+            lcd.clear();
             printCenter("REMOVENDO", 0);
             printCenter("USUARIO", 1);
+            removeHandled = true;
+            }
             // Inicia o piscar apenas uma vez
             if (!cadasPiscarAtivo) {
                 cadasPiscarAtivo = true;
@@ -218,9 +229,12 @@ void handleFeedback() {
             break;
 
         case STATE_SUCCESS_CADAS:
+            if(!successCadasHandled){
+            lcd.clear();
             printCenter("CADASTRADO", 0);
             printCenter("COM SUCESSO", 1);
-
+            successCadasHandled = true;
+            }
             if (now - feedbackTimestamp >= 250) { // intervalo de 250ms entre os piscas
             feedbackTimestamp = now;
             static int blinkCount = 0;
@@ -242,9 +256,12 @@ void handleFeedback() {
             break;
 
         case STATE_SUCCESS_REMOV:
+            if(!successRemoveHandled){
+            lcd.clear();
             printCenter("REMOVIDO", 0);
             printCenter("COM SUCESSO", 1);
-
+            successRemoveHandled = true;
+            }
             if (now - feedbackTimestamp >= 250) { // intervalo de 250ms entre os piscas
             feedbackTimestamp = now;
             static int blinkCount = 0;
@@ -265,6 +282,24 @@ void handleFeedback() {
             }
             break;
 
+        case STATE_KEYPAD_INPUT:
+            if (keypadDisplayNeedsUpdate) {
+                printCenter("Digite a senha", 0);
+                
+                // Limpa a segunda linha antes de redesenhar os asteriscos
+                lcd.setCursor(0, 1);
+                lcd.print("                ");  
+                
+                // Desenha os asteriscos
+                lcd.setCursor(0, 1);
+                for (int i = 0; i < enteredPassword.length(); i++) {
+                  lcd.print("*");
+                }
+                
+                // Abaixa a bandeira após a atualização
+                keypadDisplayNeedsUpdate = false; 
+            }
+            break; // O break fica fora do if
     }
 }
 void printCenter(String msg, int row) {
@@ -280,25 +315,24 @@ void printCenter(String msg, int row) {
 void signalIdle() {
   currentFeedbackState = STATE_IDLE;
   lcd.clear();
+  
 }
 
 void signalSuccess() {
   currentFeedbackState = STATE_SUCCESS;
   successHandled = false;   // <-- reset aqui garante que sempre vai acender de novo
-  lcd.clear();
 }
 
 void signalFail() {
   currentFeedbackState = STATE_FAIL;
-  lcd.clear();
-
+  failHandled = false;
 }
 
 void signalCadas() {
   currentFeedbackState = STATE_CADAS;
     // Inicialização de variáveis para piscar no handleFeedback()
   cadasPiscarAtivo = false; // será inicializado lá
-  lcd.clear();
+  cadasHandled = false;
 
   } 
 
@@ -306,23 +340,29 @@ void signalCadas() {
 void signalLocking() {
   currentFeedbackState = STATE_LOCKING;
   lockingPiscarAtivo = false;
-  lcd.clear();
+  
 
 }
 
 void successCadas(){
   currentFeedbackState = STATE_SUCCESS_CADAS;
-  lcd.clear();
-  
+  successCadasHandled = false;
 }
 
 void signalRemove() {
   currentFeedbackState = STATE_REMOVE;
   removePiscarAtivo = false;
-  lcd.clear();
+  removeHandled = false;
 
 }
 void sucessRemove() {
   currentFeedbackState = STATE_SUCCESS_REMOV;
-  lcd.clear();
+  successRemoveHandled = false;
+}
+void signalKeypadInput() {
+  if (currentFeedbackState == STATE_IDLE) { // Só muda de estado se estiver ocioso
+    currentFeedbackState = STATE_KEYPAD_INPUT;
+    keypadDisplayNeedsUpdate = true; 
+  }
+  
 }
