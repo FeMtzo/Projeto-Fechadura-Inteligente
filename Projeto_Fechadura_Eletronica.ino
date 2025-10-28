@@ -28,6 +28,8 @@ void setupTelegram();
 void checkWiFi();
 void handleTelegram();
 void sendTelegramMessage(String message);
+// void setupBiometrics();
+// void handleBiometrics();
 // void checkTelegramMessages();
 
 // --- Fim das declarações ---
@@ -51,6 +53,7 @@ void setup() {
   setupLock();
   setupRFID();
   setupKeypad();
+  // setupBiometrics();
   setupTelegram();
   setupFeedback(); 
   Serial.println("Sistema pronto.");
@@ -61,6 +64,7 @@ void loop() {
   handleRFID();
   handleKeypad();
   handleTelegram();
+  // handleBiometrics();
   // checkTelegramMessages();
   handleLockState();
   handleFeedback();

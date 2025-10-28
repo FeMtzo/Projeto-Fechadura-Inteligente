@@ -11,7 +11,7 @@ enum AccessType {
     ACCESS_NONE,
     ACCESS_RFID,
     ACCESS_PASSWORD,
-    ACCESS_BIOMETRIC,
+    BIOMETRICS,
     ACCESS_TELEGRAM
 };
 
@@ -69,10 +69,10 @@ bool checarPermissao(const String& uid);
 extern byte KEYPAD_ROW_PINS[KEYPAD_ROWS];
 extern byte KEYPAD_COL_PINS[KEYPAD_COLS];
 
-// --- Leitor Biometrico ---
 
-#define BIO_RX          16
-#define BIO_TX          17
+// --- Sensor Biométrico AS608 ---
+#define BIOMETRICS_RX_PIN 16 // Conectar ao pino TX do sensor
+#define BIOMETRICS_TX_PIN 17 // Conectar ao pino RX do sensor
 
 // --- LEDs & Buzzer (Feedback visual/sonoro) ---
 #define LED_GREEN_PIN   13
@@ -94,7 +94,7 @@ extern byte KEYPAD_COL_PINS[KEYPAD_COLS];
 // ============================================================================
 #define WIFI_SSID        "matozo"
 #define WIFI_PASSWORD    "matozo2252"
-#define TELEGRAM_BOT_TOKEN "8225811146:AAFqUO2Nyxz9FfG-9JJW98t--I8sDr_kZNA"
+#define TELEGRAM_BOT_TOKEN "8225811146:AAFyoQwxwyT9cApsH6yDvc9XoKz6hr5SMoA"
 
 // ============================================================================
 // CONFIGURAÇÕES DE FECHADURA
