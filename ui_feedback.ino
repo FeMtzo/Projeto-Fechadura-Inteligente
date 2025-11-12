@@ -338,6 +338,7 @@ void signalCadas() {
 
 
 void signalLocking() {
+  lcd.clear();
   currentFeedbackState = STATE_LOCKING;
   lockingPiscarAtivo = false;
   

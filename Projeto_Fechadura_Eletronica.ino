@@ -10,7 +10,7 @@
 #include "LittleFS.h"
 #include "config.h"
 
-bool keypadDisplayNeedsUpdate = false; // <<< ADICIONE ESTA LINHA
+bool keypadDisplayNeedsUpdate = false;
 // --- Declaração das funções que estão nos outros arquivos .cpp ---
 // Isso informa ao main.cpp que essas funções existem em algum lugar do projeto.
 void setupLock();
@@ -28,8 +28,8 @@ void setupTelegram();
 void checkWiFi();
 void handleTelegram();
 void sendTelegramMessage(String message);
-// void setupBiometrics();
-// void handleBiometrics();
+void setupBiometrics();
+void handleBiometrics();
 // void checkTelegramMessages();
 
 // --- Fim das declarações ---
@@ -40,11 +40,10 @@ void setup() {
   securityInit();
   if (!LittleFS.begin(true)) {
     Serial.println("Erro ao iniciar LittleFS!");
-    while(1); // trava o sistema se não conseguir iniciar
+    while(1);
   }
   Serial.println("LittleFS iniciado.");
 
-  // Cria o arquivo senhas.txt se não existir
   if (!LittleFS.exists("/senhas.txt")) {
     File f = LittleFS.open("/senhas.txt", "w");
     if (f) f.close();
@@ -53,7 +52,7 @@ void setup() {
   setupLock();
   setupRFID();
   setupKeypad();
-  // setupBiometrics();
+  setupBiometrics();
   setupTelegram();
   setupFeedback(); 
   Serial.println("Sistema pronto.");
@@ -64,7 +63,7 @@ void loop() {
   handleRFID();
   handleKeypad();
   handleTelegram();
-  // handleBiometrics();
+  handleBiometrics();
   // checkTelegramMessages();
   handleLockState();
   handleFeedback();

@@ -88,7 +88,7 @@ extern byte KEYPAD_COL_PINS[KEYPAD_COLS];
 // ============================================================================
 #define MASTER_UID       "F3:9F:87:14"   // UID da tag RFID mestre
 #define PASSWORD "1A2B3C"   // Defina aqui a senha
-
+#define ADMIN_PASSWORD "9999"
 // ============================================================================
 // CONFIGURAÇÕES DE REDE & TELEGRAM
 // ============================================================================
