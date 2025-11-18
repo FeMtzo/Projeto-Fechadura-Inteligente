@@ -6,6 +6,22 @@
 // ENUMS & STRUCTS
 // ============================================================================
 
+// Enum para representar os estados de feedback de forma legível
+enum FeedbackState {
+  STATE_IDLE,
+  STATE_SUCCESS,
+  STATE_FAIL,
+  STATE_CADAS,
+  STATE_ENROLL_ID_REQUEST,
+  STATE_LOCKING,
+  STATE_SUCCESS_CADAS,
+  STATE_REMOVE,
+  STATE_SUCCESS_REMOV,
+  STATE_KEYPAD_INPUT,
+  STATE_DOOR_OPEN_WAIT,
+  STATE_ALARM_UNAUTHORIZED,  
+};
+
 // Tipos de acesso possíveis
 enum AccessType {
     ACCESS_NONE,
@@ -45,7 +61,7 @@ void sendTelegramTagCadastrada(const String &uid);
 void sendTelegramTagRemovida(const String &uid);
 void sendTelegramTagMestra();
 void sendTelegramBotStart();
-
+void sendTelegramAlarm();
 // ============================================================================
 // FUNÇÕES UTILITÁRIAS
 // ============================================================================
@@ -82,6 +98,10 @@ extern byte KEYPAD_COL_PINS[KEYPAD_COLS];
 #define LCD_SDA_PIN     21
 #define LCD_SCL_PIN     22
 
+// --- Sensor de Porta (Reed Switch) ---
+#define DOOR_SENSOR_PIN 2
+#define DOOR_CLOSED_STATE HIGH  // <<< MUDE PARA HIGH (Porta Fechada = 3.3V)
+#define DOOR_OPEN_STATE   LOW   // <<< MUDE PARA LOW (Porta Aberta = GND)
 
 // ============================================================================
 // CONFIGURAÇÕES DE ACESSO

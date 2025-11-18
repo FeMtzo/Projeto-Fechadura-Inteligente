@@ -6,23 +6,18 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// Enum para representar os estados de feedback de forma legível
-enum FeedbackState {
-  STATE_IDLE,
-  STATE_SUCCESS,
-  STATE_FAIL,
-  STATE_CADAS,
-  STATE_LOCKING,
-  STATE_SUCCESS_CADAS,
-  STATE_REMOVE,
-  STATE_SUCCESS_REMOV,
-  STATE_KEYPAD_INPUT
-};
+extern bool keypadDisplayNeedsUpdate;
+extern bool isUnlockAuthorized; // <<< ADICIONE
+extern FeedbackState currentFeedbackState;
+
+extern String enteredPassword;
+extern bool keypadDisplayNeedsUpdate;
+extern LiquidCrystal_I2C lcd;
 
 extern String enteredPassword;
 extern bool keypadDisplayNeedsUpdate;
 // Variáveis de estado para o controle não-bloqueante
-FeedbackState currentFeedbackState = STATE_IDLE;
+extern FeedbackState currentFeedbackState;
 unsigned long feedbackTimestamp = 0;
 unsigned long blinkTime = 0;
 
@@ -52,15 +47,14 @@ bool cadasHandled = false;
 bool removeHandled = false;
 bool successRemoveHandled = false;
 
-
 unsigned long lockOpenedAt = 0; 
 // Controle do feedback de falha
 bool failHandled = false; 
 
 // Controle LCD
-LiquidCrystal_I2C lcd(0x27, 16, 2); // endereço 0x27 é o mais comum
 unsigned long tempoMensagem = 0;
 bool mostrandoMsg = false;
+
 
 void setupFeedback() {
   pinMode(LED_GREEN_PIN, OUTPUT);
@@ -85,7 +79,32 @@ void handleFeedback() {
     unsigned long now = millis();
 
     switch(currentFeedbackState) {
+
+        case STATE_DOOR_OPEN_WAIT:
+          printCenter("PORTA ABERTA", 0);
+          printCenter("Feche a porta...", 1);
+          // Mantém o relé destravado e o LED verde aceso
+          digitalWrite(RELAY_PIN, HIGH); 
+          digitalWrite(LED_GREEN_PIN, HIGH);
+          digitalWrite(LED_RED_PIN, LOW);
+          digitalWrite(LED_BLUE_PIN, LOW);
+          break;
+
+        case STATE_ALARM_UNAUTHORIZED:
+          printCenter("!!! ALARME !!!", 0);
+          printCenter("PORTA ARROMBADA", 1);
+          // Pisca vermelho e soa o buzzer
+          if (millis() - blinkTime > 300) { // Pisca rápido
+              blinkTime = millis();
+              digitalWrite(LED_RED_PIN, !digitalRead(LED_RED_PIN));
+              digitalWrite(BUZZER_PIN, !digitalRead(BUZZER_PIN));
+          }
+          digitalWrite(LED_GREEN_PIN, LOW);
+          digitalWrite(LED_BLUE_PIN, LOW);
+          break;
+
         case STATE_IDLE:
+            digitalWrite(RELAY_PIN, LOW);
             printCenter("AGUARDANDO", 0);
             printCenter("INTERACAO", 1);
             digitalWrite(LED_GREEN_PIN, LOW);
@@ -95,27 +114,32 @@ void handleFeedback() {
             return;
 
         case STATE_SUCCESS:
-            if (!successHandled) { // variável para evitar múltiplos envios
-                lcd.clear();
+          if (!successHandled) { 
+              lcd.clear(); 
+              printCenter("SUCESSO", 0);
+              printCenter("ABRINDO", 1);
+              digitalWrite(RELAY_PIN, HIGH); // <<< DESTRAVA A PORTA
+              digitalWrite(LED_RED_PIN, LOW);
+              digitalWrite(LED_BLUE_PIN, LOW);
+              digitalWrite(LED_GREEN_PIN, HIGH);
+              digitalWrite(BUZZER_PIN, HIGH);
 
-                printCenter("SUCESSO", 0);
-                printCenter("ABRINDO", 1);
-                digitalWrite(LED_RED_PIN, LOW);
-                digitalWrite(LED_BLUE_PIN, LOW);
-                digitalWrite(LED_GREEN_PIN, HIGH);
-                digitalWrite(BUZZER_PIN, HIGH);
-                sendTelegramAccessGranted(lastAccessMethod); // agenda uma vez
-                lockOpenedAt = millis();
-                successHandled = true; // marca que já enviou
-            }
+              sendTelegramAccessGranted(lastAccessMethod);
+              lockOpenedAt = millis();
+              successHandled = true; 
+          }
 
-            // Mantém o LED ligado pelo tempo de abertura da fechadura
-            if (millis() - lockOpenedAt >= LOCK_OPEN_DURATION) {
-                digitalWrite(LED_GREEN_PIN, LOW);
-                digitalWrite(BUZZER_PIN, LOW);
-                signalIdle();
-            }
-            break;
+          // Mantém o som do buzzer SÓ no início
+          if (millis() - lockOpenedAt >= 500) { // Desliga buzzer após 0.5s
+              digitalWrite(BUZZER_PIN, LOW);
+          }
+
+          // Timeout de auto-relock (se o usuário destravou e NÃO abriu a porta)
+          if (millis() - lockOpenedAt >= LOCK_OPEN_DURATION) {
+              isUnlockAuthorized = false; // Cancela a autorização
+              signalLocking(); // Tranca de volta
+          }
+          break;
 
         case STATE_FAIL:
             if (!failHandled) { // evita múltiplos envios
@@ -204,6 +228,7 @@ void handleFeedback() {
             break;
 
         case STATE_LOCKING:
+            digitalWrite(RELAY_PIN, LOW);
             printCenter("TRAVANDO", 0);
             printCenter("PORTA", 1);
             digitalWrite(LED_GREEN_PIN, LOW);
@@ -300,6 +325,12 @@ void handleFeedback() {
                 keypadDisplayNeedsUpdate = false; 
             }
             break; // O break fica fora do if
+
+        case STATE_ENROLL_ID_REQUEST:
+          printCenter("CADASTRO", 0);
+          printCenter("Digite o ID:", 1);
+          // O LCD de asteriscos será atualizado pela lógica do keypad
+          break;
     }
 }
 void printCenter(String msg, int row) {
@@ -318,15 +349,35 @@ void signalIdle() {
   
 }
 
+
 void signalSuccess() {
-  currentFeedbackState = STATE_SUCCESS;
-  successHandled = false;   // <-- reset aqui garante que sempre vai acender de novo
+  // VERIFICA SE O ALARME ESTÁ ATIVO
+  if (currentFeedbackState == STATE_ALARM_UNAUTHORIZED) {
+    // Se sim, o "sucesso" é apenas um RESET DE ALARME.
+    // Não muda para STATE_SUCCESS e NÃO autoriza a abertura.
+    Serial.println("UI: Sinal de sucesso recebido. Resetando alarme.");
+    signalIdle(); // Apenas volta ao estado ocioso.
+  } 
+  else {
+    // Se não, é um SUCESSO normal para abrir a porta.
+    currentFeedbackState = STATE_SUCCESS;
+    successHandled = false;
+    isUnlockAuthorized = true; // Autoriza a abertura
+  }
 }
 
 void signalFail() {
+  // Se o alarme principal (arrombamento) já está tocando,
+  // não devemos mostrar "Acesso Negado" nem resetar o alarme.
+  if (currentFeedbackState == STATE_ALARM_UNAUTHORIZED) {
+    Serial.println("UI: Sinal de falha ignorado (alarme ativo).");
+    return; // Simplesmente ignora a falha e mantém o alarme.
+  }
+
+  // Se não, é uma falha normal (sem alarme).
   currentFeedbackState = STATE_FAIL;
   failHandled = false;
-}
+} 
 
 void signalCadas() {
   currentFeedbackState = STATE_CADAS;
@@ -366,4 +417,17 @@ void signalKeypadInput() {
     keypadDisplayNeedsUpdate = true; 
   }
   
+}
+void signalRequestEnrollID() {
+  currentFeedbackState = STATE_ENROLL_ID_REQUEST;
+  enteredPassword = ""; // Limpa a senha anterior
+  keypadDisplayNeedsUpdate = true; // Força a atualização da tela
+  lcd.clear();
+}
+
+void signalAlarm() {
+  currentFeedbackState = STATE_ALARM_UNAUTHORIZED;
+  blinkTime = millis(); // Reseta o timer do pisca
+  lcd.clear();
+  sendTelegramAlarm(); 
 }

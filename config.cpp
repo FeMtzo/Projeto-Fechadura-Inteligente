@@ -55,7 +55,9 @@ void sendTelegramTagMestra() {
 void sendTelegramBotStart() {
     requestTelegramMessage(TELEGRAM_CHAT_ID, "Bot iniciou!");
 }
-
+void sendTelegramAlarm() {
+    requestTelegramMessage(TELEGRAM_CHAT_ID, "ATENÇÃO!! LOCAL INVADIDO!");
+}
 // --- Função para checar permissão (exemplo) ---
 bool checarPermissao(const String& uid) {
     // Aqui você implementa sua lógica

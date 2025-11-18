@@ -13,7 +13,9 @@ extern void signalKeypadInput();
 extern void signalSuccess();
 extern void signalFail();
 extern void signalIdle();
-
+extern void signalRequestEnrollID(); 
+extern void doEnrollmentProcess(uint8_t id); 
+extern FeedbackState currentFeedbackState; 
 // Mapeamento das teclas do teclado 4x4
 char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
   {'1','2','3','A'},
@@ -44,40 +46,65 @@ void setupKeypad() {
 
 void handleKeypad() {
   char key = keypad.getKey();
+
   if (key) {
     // Ao pressionar a primeira tecla, sinaliza para o UI mudar de tela
-    if (enteredPassword.length() == 0 && (key != '*' && key != '#')) {
+    if (currentFeedbackState == STATE_IDLE && (key != '*' && key != '#')) {
       signalKeypadInput();
     }
+    
     Serial.print("Tecla pressionada: ");
     Serial.println(key);
 
     if (key == '*') {
       // Limpa senha e sinaliza para o UI voltar ao estado idle
       enteredPassword = "";
+      keypadDisplayNeedsUpdate = true; // Força atualização (para limpar os asteriscos)
       signalIdle();
-    }
-
+    } 
     else if (key == '#') {
-      // Verifica senha
-      if (enteredPassword == PASSWORD) {
-        lastAccessMethod = ACCESS_PASSWORD;
+      
+      // <<< LÓGICA PRINCIPAL ALTERADA >>>
+      
+      // Se estamos na tela de Pedir ID, o "password" é na verdade o ID
+      if (currentFeedbackState == STATE_ENROLL_ID_REQUEST) {
+        int id = enteredPassword.toInt();
+        if (id > 0 && id <= 127) {
+          // ID válido, inicia o processo de cadastro
+          doEnrollmentProcess(id);
+        } else {
+          // ID inválido
+          signalFail(); // Apenas sinaliza falha e volta ao IDLE
+        }
+        enteredPassword = "";
+        
+      } 
+      // Se não, verifica se é a senha de ABERTURA
+      else if (enteredPassword == PASSWORD) {
         Serial.println("Senha correta! Fechadura acionada.");
-        openLock();
-        // aqui você pode acionar o relé/trava
-      } else {
         lastAccessMethod = ACCESS_PASSWORD;
+        signalSuccess();
+        enteredPassword = "";
+      } 
+      // Se não, verifica se é a senha ADMIN
+      else if (enteredPassword == ADMIN_PASSWORD) {
+        Serial.println("Senha Admin correta! Entrando no modo de cadastro.");
+        signalRequestEnrollID(); // Chama a tela de pedir ID
+        enteredPassword = ""; // Limpa a senha admin
+      } 
+      // Se não for nenhuma das opções
+      else {
         Serial.println("Senha incorreta!");
         signalFail();
+        enteredPassword = "";
       }
-      enteredPassword = "";
-      printCenter("Digite a senha", 0);
+      
     } 
     else {
       // Armazena dígitos
       if (enteredPassword.length() < passwordLength) {
         enteredPassword += key;
-        keypadDisplayNeedsUpdate = true;      
+        keypadDisplayNeedsUpdate = true;
       }
     }
   }

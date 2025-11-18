@@ -5,7 +5,9 @@
 extern void signalSuccess();
 extern void signalFail();
 extern AccessType lastAccessMethod;
-
+extern void signalIdle();
+extern LiquidCrystal_I2C lcd;
+extern void printCenter(String msg, int row);
 // --- Configuração do Sensor ---
 HardwareSerial mySerial(2); // Usa a UART2
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
@@ -88,4 +90,89 @@ void handleBiometrics() {
     signalFail();                  // Sinaliza falha para o UI
     lastFingerTry = millis();      // Inicia o tempo de espera
   }
+}
+// Esta função é BLOQUEANTE. Ela assume o controle do loop para o cadastro.
+void doEnrollmentProcess(uint8_t id) {
+  
+  // Passo 1: Esperar a primeira leitura
+  lcd.clear();
+  printCenter("Coloque o dedo", 0);
+  printCenter("CADASTRO de ID" + String(id), 1);
+  
+  int p = -1;
+  while (p != FINGERPRINT_OK) {
+    p = finger.getImage();
+    delay(50); // Evita sobrecarregar o sensor
+  }
+  
+  // Converte a imagem
+  p = finger.image2Tz(1);
+  if (p != FINGERPRINT_OK) {
+    lcd.clear();
+    printCenter("Erro cadastro", 0);
+    printCenter(getFingerprintError(p), 1);
+    delay(2000);
+    signalIdle();
+    return;
+  }
+
+  // Passo 2: Esperar remover o dedo
+  lcd.clear();
+  printCenter("Remova o dedo", 0);
+  delay(1000); // Dá tempo de ler a mensagem
+  p = 0;
+  while (p != FINGERPRINT_NOFINGER) {
+    p = finger.getImage();
+    delay(50);
+  }
+
+  // Passo 3: Esperar a segunda leitura
+  lcd.clear();
+  printCenter("Coloque o MESMO", 0);
+  printCenter("dedo novamente", 1);
+  
+  p = -1;
+  while (p != FINGERPRINT_OK) {
+    p = finger.getImage();
+    delay(50);
+  }
+
+  // Converte a segunda imagem
+  p = finger.image2Tz(2);
+  if (p != FINGERPRINT_OK) {
+    lcd.clear();
+    printCenter("Erro cadastro", 0);
+    printCenter(getFingerprintError(p), 1);
+    delay(2000);
+    signalIdle();
+    return;
+  }
+
+  // Passo 4: Criar e Salvar o Modelo
+  lcd.clear();
+  printCenter("Criando modelo...", 0);
+  
+  p = finger.createModel();
+  if (p != FINGERPRINT_OK) {
+    lcd.clear();
+    printCenter("Erro cadastro", 0);
+    printCenter(getFingerprintError(p), 1);
+    delay(2000);
+    signalIdle();
+    return;
+  }
+
+  p = finger.storeModel(id);
+  if (p == FINGERPRINT_OK) {
+    lcd.clear();
+    printCenter("CADASTRADO", 0);
+    printCenter("COM SUCESSO!", 1);
+  } else {
+    lcd.clear();
+    printCenter("Erro ao Salvar", 0);
+    printCenter(getFingerprintError(p), 1);
+  }
+
+  delay(2000); // Tempo para ler a mensagem final
+  signalIdle();  // Retorna ao estado ocioso
 }

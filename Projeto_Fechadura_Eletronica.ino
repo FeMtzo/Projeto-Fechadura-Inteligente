@@ -9,17 +9,22 @@
 #include "FS.h"
 #include "LittleFS.h"
 #include "config.h"
-
+#include <LiquidCrystal_I2C.h>
+bool isUnlockAuthorized = false; // <<< ADICIONE ESTA LINHA
 bool keypadDisplayNeedsUpdate = false;
+FeedbackState currentFeedbackState = STATE_IDLE;
+LiquidCrystal_I2C lcd(0x27, 16, 2); 
 // --- Declaração das funções que estão nos outros arquivos .cpp ---
 // Isso informa ao main.cpp que essas funções existem em algum lugar do projeto.
 void setupLock();
 void openLock();
 void handleLockState();
 void securityInit();
-
+void doEnrollmentProcess(uint8_t id);
 void setupRFID();
 void handleRFID();
+void setupDoorSensor();    
+void handleDoorSensor();   
 
 void setupKeypad();
 void handleKeypad();
@@ -49,6 +54,7 @@ void setup() {
     if (f) f.close();
     Serial.println("Arquivo senhas.txt criado!");
   }
+  setupDoorSensor();
   setupLock();
   setupRFID();
   setupKeypad();
@@ -59,6 +65,7 @@ void setup() {
 }
 
 void loop() {
+  handleDoorSensor();
   checkWiFi();
   handleRFID();
   handleKeypad();

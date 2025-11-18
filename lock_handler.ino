@@ -1,8 +1,6 @@
 #include "config.h"
 
-// Variáveis de estado da fechadura
-bool isLockOpen = false;
-unsigned long lockOpenTimestamp = 0;
+extern void signalSuccess();
 
 void setupLock() {
   pinMode(RELAY_PIN, OUTPUT);
@@ -11,25 +9,11 @@ void setupLock() {
 }
 
 void openLock() {
-  if (!isLockOpen){
-    signalSuccess(); 
-    Serial.println("Comando recebido! Abrindo fechadura...");
-    digitalWrite(RELAY_PIN, RELAY_ACTIVE_LEVEL);
-    isLockOpen = true;
-    lockOpenTimestamp = millis();    
-}
+  signalSuccess(); 
+  
 }
 
 void handleLockState(){
   
-  if (!isLockOpen){
-    return;
-  }
-  if (millis() - lockOpenTimestamp >= LOCK_OPEN_DURATION){
-    signalLocking();
-    Serial.print("TEMPO ACABOU!! Travando a fechadura...");
-    digitalWrite(RELAY_PIN, !RELAY_ACTIVE_LEVEL);
-    isLockOpen = false;
-  }
 }
 
